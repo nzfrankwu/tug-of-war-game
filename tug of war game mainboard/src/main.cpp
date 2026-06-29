@@ -185,14 +185,25 @@ void GameTask(void *pvParameters) {
                 current_pattern_duration = getNextDuration(0);
                 p1_score = 0;
                 p2_score = 0;
-                Serial.println("Game State -> 2 (Playing!)");
+                Serial.println("Game State -> 2 (Countdown!)");
+            }
+        }
+        // =======================================================
+        // STATE 2: COUNTDOWN 
+        // =======================================================
+        else if (game_state == 2) {
+            // Wait 3 seconds (3, 2, 1), then trigger the actual game
+            if (current_time - game_start_time >= 3000) {
+                game_state = 3; // Move to PLAYING
+                last_pattern_change = current_time; // Reset pattern timer
+                Serial.println("Game State -> 3 (Playing!)");
             }
         }
 
         // =======================================================
-        // STATE 2: PLAYING (TUG OF WAR)
+        // STATE 3: PLAYING (TUG OF WAR)
         // =======================================================
-        else if (game_state == 2) {
+        else if (game_state == 3) {
             current_level = (current_time - game_start_time) / 20000;
 
             if (current_time - last_pattern_change >= current_pattern_duration) {
@@ -214,15 +225,15 @@ void GameTask(void *pvParameters) {
 
             int score_diff = p1_score - p2_score;
             if (abs(score_diff) >= MAX_SCORE_DIFF) {
-                game_state = 3; 
-                Serial.println("Game State -> 3 (Game Over!)");
+                game_state = 4; 
+                Serial.println("Game State -> 4 (Game Over!)");
             }
         }
 
         // =======================================================
-        // STATE 3: GAME OVER
+        // STATE 4: GAME OVER
         // =======================================================
-        else if (game_state == 3) {
+        else if (game_state == 4) {
             if (btn_start_pressed) {
                 game_state = 0;
                 p1_score = 0;
