@@ -86,7 +86,6 @@ def serial_worker():
 # MAIN LOOP
 # =======================================================================
 def main():
-    global gif_frames, gif_anim 
     pygame.init()
     screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
     pygame.display.set_caption("EMG Tug Of War - Display Client")
@@ -98,41 +97,32 @@ def main():
         pygame.font.SysFont(None, int(HEIGHT * 0.08)), 
         pygame.font.SysFont(None, int(HEIGHT * 0.04))  
     )
-    
-    
-    #Instantiate your background GIF object seamlessly from the class
+    # Start the serial listener thread
+    serial_thread = threading.Thread(target=serial_worker, daemon=True)
+    serial_thread.start()
+
+
+    # Load gifs/images for UI    
     background_gif = AnimatedGIF(GIF_FILENAME, WIDTH, HEIGHT, frame_delay=100)
     
-    # Player Icon Setup
     p_width = int(WIDTH * 0.225)
     p_height = int(HEIGHT * 0.4)
-    # player_pull_raw = pygame.image.load("assets\\player temp pull.png").convert_alpha()
-    # player_pull_icon = pygame.transform.scale(player_pull_raw, (p_width, p_height))
     
-    # player_idle_raw = pygame.image.load("assets\\player temp idle.png").convert_alpha()
-    # player_idle_icon= pygame.transform.scale(player_idle_raw, (p_width, p_height))
-    
-    # player_2_raw = pygame.image.load("assets\\player 2 pull.png").convert_alpha()
-    # player_2_pull = pygame.transform.scale(player_2_raw, (p_width, p_height))
-    player_2_gif = AnimatedGIF("assets\\player 2 animation.gif", p_width, p_height, frame_delay=200)
-    serial_thread = threading.Thread(target=serial_worker, daemon=True)
-    serial_thread.start()
+    test =  pygame.image.load("assets\\pixil-layer-Background.png").convert_alpha()
+    test_image = pygame.transform.scale(test, (WIDTH * 0.8, p_height))
     
     
-    player_1_gif = AnimatedGIF("assets\\player 1 animation.gif", p_width, p_height, frame_delay=200)
-    serial_thread = threading.Thread(target=serial_worker, daemon=True)
-    serial_thread.start()
-    
-    
+    player_2_gif = AnimatedGIF("assets\player 2 animation.gif", p_width, p_height, frame_delay=200)
+    player_1_gif = AnimatedGIF("assets\player 1 animation.gif", p_width, p_height, frame_delay=200)
+      
     ui_assets = {
+    "test": test_image,
     "bg": background_gif,
     "p1_gif": player_1_gif,
     "p2_gif": player_2_gif
     }
 
-    
     running = True
-
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:

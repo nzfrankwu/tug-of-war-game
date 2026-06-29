@@ -8,8 +8,9 @@ from enum import IntEnum
 class GameState(IntEnum):
     START_SCREEN = 0
     CALIBRATION = 1
-    PLAYING = 2
-    GAME_OVER = 3
+    COUNTDOWN = 2
+    PLAYING = 3
+    GAME_OVER = 4
 
 # UI Colors grouped here since they belong to the display layer
 BLACK = (20, 20, 20)
@@ -28,11 +29,11 @@ ROPE_COLOR = (200, 180, 140)
 # =======================================================================
 def draw_ui(screen, fonts, game_data, calib_timers, ui_assets, MAX_SCORE_DIFF):
     # Extract variables by name
+    test_image = ui_assets["test"]
     background_gif = ui_assets["bg"]
     player_1_gif = ui_assets["p1_gif"]
     player_2_gif = ui_assets["p2_gif"]
  
-    
     
     
     
@@ -54,7 +55,7 @@ def draw_ui(screen, fonts, game_data, calib_timers, ui_assets, MAX_SCORE_DIFF):
     # ---------------------------------------------------------
     # SHARED BACKGROUND: PLAYERS & ROPE
     # ---------------------------------------------------------
-    if state in [GameState.START_SCREEN, GameState.PLAYING, GameState.GAME_OVER]:
+    if state in [GameState.START_SCREEN, GameState.COUNTDOWN, GameState.PLAYING, GameState.GAME_OVER]:
         # NEW: Update and render this specific GIF background safely via class methods
         background_gif.update()
         background_gif.draw(screen, (0, 0))
@@ -66,45 +67,25 @@ def draw_ui(screen, fonts, game_data, calib_timers, ui_assets, MAX_SCORE_DIFF):
         leftplayer_pos_x = 0.1
         leftplayer_pos_y = 0.6
         
+        screen.blit(test_image, (WIDTH * leftplayer_pos_x, HEIGHT * leftplayer_pos_y))
         
         # Player 1 Image Placement
-        
         p1_rect = pygame.Rect(0, 0, player_w, player_h)
         p1_rect.midleft = (WIDTH * leftplayer_pos_x, HEIGHT * leftplayer_pos_y)
         if p1_flexing:
-            pygame.draw.rect(screen, RED, p1_rect)
-        
-        player_1_gif.update()   # Tick the animation clock forward for the GIF
-        player_1_gif.draw(screen, p1_rect.topleft) # Draw the dynamically upscaled frame onto the screen matching p2_rect
-
-
+            pygame.draw.rect(screen, RED, p1_rect) 
+        player_1_gif.update()  
+        player_1_gif.draw(screen, p1_rect.topleft) 
         p1_label = font_small.render(f"P2: {game_data['p1_score']}", True, WHITE)
         screen.blit(p1_label, p1_label.get_rect(center=(p1_rect.centerx, p1_rect.bottom + HEIGHT * 0.05)))
-
-
-        
     
-
-        
-        # p2_rect = pygame.Rect(0, 0, player_w, player_h)
-        # p2_rect.midright = (WIDTH * (1-leftplayer_pos_x), HEIGHT *leftplayer_pos_y)
-        # p2_color = BLUE_BRIGHT if p2_flexing else BLUE
-        # pygame.draw.rect(screen, p2_color, p2_rect)
-        # screen.blit(player_2_pull, p2_rect.topleft)
-        # p2_label = font_small.render(f"P2: {game_data['p2_score']}", True, WHITE)
-        # screen.blit(p2_label, p2_label.get_rect(center=(p2_rect.centerx, p2_rect.bottom + HEIGHT * 0.05)))
-        
-        # # Player 2 Box
+        # Player 2 Box
         p2_rect = pygame.Rect(0, 0, player_w, player_h)
         p2_rect.midright = (WIDTH * (1 - leftplayer_pos_x), HEIGHT * leftplayer_pos_y)
         if p2_flexing:
-           
             pygame.draw.rect(screen, RED, p2_rect)
-       
-        # Tick the animation clock forward for the GIF and draw 
         player_2_gif.update()
         player_2_gif.draw(screen, p2_rect.topleft)
-
         p2_label = font_small.render(f"P2: {game_data['p2_score']}", True, WHITE)
         screen.blit(p2_label, p2_label.get_rect(center=(p2_rect.centerx, p2_rect.bottom + HEIGHT * 0.05)))
 
@@ -206,9 +187,34 @@ def draw_ui(screen, fonts, game_data, calib_timers, ui_assets, MAX_SCORE_DIFF):
             fill_w = max(0, min(bar_w, bar_w * (calib_progress / 3.0))) 
             fill_rect = pygame.Rect(bar_rect.left, bar_rect.top, fill_w, bar_h)
             pygame.draw.rect(screen, phase_color, fill_rect)
-
     # ---------------------------------------------------------
-    # STATE 2: PLAYING THE GAME
+    # STATE 2: COUNTDOWN
+    # ---------------------------------------------------------
+    elif state == GameState.COUNTDOWN:
+        # Track when we entered the countdown state to show 3, 2, 1
+        if calib_timers.get("countdown_start", 0) == 0:
+            calib_timers["countdown_start"] = current_time
+            
+        time_in_countdown = current_time - calib_timers["countdown_start"]
+        
+        # Draw the dark overlay
+        overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 180)) 
+        screen.blit(overlay, (0, 0))
+        
+        # Determine the countdown number (0 to 3 seconds)
+        if time_in_countdown < 1.0: 
+            text_str = "3"
+        elif time_in_countdown < 2.0: 
+            text_str = "2"
+        else: 
+            text_str = "1"
+            
+        count_text = font_large.render(text_str, True, YELLOW)
+        screen.blit(count_text, count_text.get_rect(center=(WIDTH/2, HEIGHT/2)))
+        
+    # ---------------------------------------------------------
+    # STATE 3: PLAYING THE GAME
     # ---------------------------------------------------------
     elif state == GameState.PLAYING:
         box_rect = pygame.Rect(0, 0, WIDTH * 0.4, HEIGHT * 0.15)
@@ -224,7 +230,7 @@ def draw_ui(screen, fonts, game_data, calib_timers, ui_assets, MAX_SCORE_DIFF):
         screen.blit(prompt_text, prompt_text.get_rect(center=box_rect.center))
 
     # ---------------------------------------------------------
-    # STATE 3: GAME OVER
+    # STATE 4: GAME OVER
     # ---------------------------------------------------------
     elif state == GameState.GAME_OVER:
         overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
@@ -240,3 +246,16 @@ def draw_ui(screen, fonts, game_data, calib_timers, ui_assets, MAX_SCORE_DIFF):
         prompt = font_medium.render("Press START Button to Play Again", True, WHITE)
         if int(current_time * 2) % 2 == 0:
             screen.blit(prompt, prompt.get_rect(center=(WIDTH/2, HEIGHT * 0.6)))
+
+
+
+
+
+
+# p2_rect = pygame.Rect(0, 0, player_w, player_h)
+        # p2_rect.midright = (WIDTH * (1-leftplayer_pos_x), HEIGHT *leftplayer_pos_y)
+        # p2_color = BLUE_BRIGHT if p2_flexing else BLUE
+        # pygame.draw.rect(screen, p2_color, p2_rect)
+        # screen.blit(player_2_pull, p2_rect.topleft)
+        # p2_label = font_small.render(f"P2: {game_data['p2_score']}", True, WHITE)
+        # screen.blit(p2_label, p2_label.get_rect(center=(p2_rect.centerx, p2_rect.bottom + HEIGHT * 0.05)))
