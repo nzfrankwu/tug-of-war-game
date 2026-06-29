@@ -26,7 +26,15 @@ ROPE_COLOR = (200, 180, 140)
 # =======================================================================
 # UI RENDERING
 # =======================================================================
-def draw_ui(screen, fonts, game_data, calib_timers, background_gif, MAX_SCORE_DIFF):
+def draw_ui(screen, fonts, game_data, calib_timers, ui_assets, MAX_SCORE_DIFF):
+    # Extract variables by name
+    background_gif = ui_assets["bg"]
+    player_1_gif = ui_assets["p1_gif"]
+    player_2_gif = ui_assets["p2_gif"]
+ 
+    
+    
+    
     
     WIDTH, HEIGHT = screen.get_size()
     state = game_data["game_state"]
@@ -51,31 +59,61 @@ def draw_ui(screen, fonts, game_data, calib_timers, background_gif, MAX_SCORE_DI
         background_gif.update()
         background_gif.draw(screen, (0, 0))
         
+        player_w = WIDTH * 0.225
+        player_h = HEIGHT * 0.4
+        
+        # position of the center left edge of the left player image 
+        leftplayer_pos_x = 0.1
+        leftplayer_pos_y = 0.6
         
         
-        player_w = WIDTH * 0.1
-        player_h = HEIGHT * 0.25
+        # Player 1 Image Placement
         
-        # Player 1 Box
         p1_rect = pygame.Rect(0, 0, player_w, player_h)
-        p1_rect.midleft = (WIDTH * 0.05, HEIGHT / 2)
-        p1_color = RED_BRIGHT if p1_flexing else RED
-        pygame.draw.rect(screen, p1_color, p1_rect)
-        p1_label = font_small.render(f"P1: {game_data['p1_score']}", True, WHITE)
+        p1_rect.midleft = (WIDTH * leftplayer_pos_x, HEIGHT * leftplayer_pos_y)
+        if p1_flexing:
+            pygame.draw.rect(screen, RED, p1_rect)
+        
+        player_1_gif.update()   # Tick the animation clock forward for the GIF
+        player_1_gif.draw(screen, p1_rect.topleft) # Draw the dynamically upscaled frame onto the screen matching p2_rect
+
+
+        p1_label = font_small.render(f"P2: {game_data['p1_score']}", True, WHITE)
         screen.blit(p1_label, p1_label.get_rect(center=(p1_rect.centerx, p1_rect.bottom + HEIGHT * 0.05)))
 
-        # Player 2 Box
+
+        
+    
+
+        
+        # p2_rect = pygame.Rect(0, 0, player_w, player_h)
+        # p2_rect.midright = (WIDTH * (1-leftplayer_pos_x), HEIGHT *leftplayer_pos_y)
+        # p2_color = BLUE_BRIGHT if p2_flexing else BLUE
+        # pygame.draw.rect(screen, p2_color, p2_rect)
+        # screen.blit(player_2_pull, p2_rect.topleft)
+        # p2_label = font_small.render(f"P2: {game_data['p2_score']}", True, WHITE)
+        # screen.blit(p2_label, p2_label.get_rect(center=(p2_rect.centerx, p2_rect.bottom + HEIGHT * 0.05)))
+        
+        # # Player 2 Box
         p2_rect = pygame.Rect(0, 0, player_w, player_h)
-        p2_rect.midright = (WIDTH * 0.95, HEIGHT / 2)
-        p2_color = BLUE_BRIGHT if p2_flexing else BLUE
-        pygame.draw.rect(screen, p2_color, p2_rect)
+        p2_rect.midright = (WIDTH * (1 - leftplayer_pos_x), HEIGHT * leftplayer_pos_y)
+        if p2_flexing:
+           
+            pygame.draw.rect(screen, RED, p2_rect)
+       
+        # Tick the animation clock forward for the GIF and draw 
+        player_2_gif.update()
+        player_2_gif.draw(screen, p2_rect.topleft)
+
         p2_label = font_small.render(f"P2: {game_data['p2_score']}", True, WHITE)
         screen.blit(p2_label, p2_label.get_rect(center=(p2_rect.centerx, p2_rect.bottom + HEIGHT * 0.05)))
 
+
         # Draw Rope & Flag
-        rope_start_pos = p1_rect.midright
-        rope_end_pos = p2_rect.midleft
-        rope_thickness = max(5, int(HEIGHT * 0.02))
+        rope_y = p2_rect.midleft[1]- (player_h /10) # Sligtly above the center of the player images to account for the where the rope was drawn
+        rope_start_pos = (p1_rect.midright[0], rope_y)
+        rope_end_pos = (p2_rect.midleft[0], rope_y)
+        rope_thickness = max(5, int(player_w /18))
         pygame.draw.line(screen, ROPE_COLOR, rope_start_pos, rope_end_pos, rope_thickness)
 
         score_diff = game_data["p1_score"] - game_data["p2_score"]
@@ -83,7 +121,9 @@ def draw_ui(screen, fonts, game_data, calib_timers, background_gif, MAX_SCORE_DI
         pull_percentage = max(-1.0, min(1.0, pull_percentage)) 
         
         rope_center_x = WIDTH / 2
-        rope_y = HEIGHT / 2
+        
+        # this now dynamically grabs the Y position of the rope and positions the flag and marker accordingly
+        rope_y = rope_start_pos[1] 
         
         flag_w = WIDTH * 0.04
         padding = flag_w / 2
